@@ -28,49 +28,45 @@ local lz4_preferences = LZ4F_preferences_t(
 	{ 0, 0, 0, 0 }  -- reserved, must be set to 0
 )
 
-local function compress_file(infile, out)
+local function compress_file(infile, outfile)
 	local size_in = 0;
 	local size_out = 0;
 
-	local  r=0;
 	local ctx = ffi.new("struct LZ4F_cctx_s *[1]");
 	ffi.gc(ctx[0], LZ4F_freeCompressionContext);
 
-	local src = nil;
-	local buf = nil;
 	local size, n, k; 
 	local count_in = 0 
 	local count_out; 
 	local offset = 0; 
 	local frame_size;
+	local err = nil;
 
-	r = LZ4F_createCompressionContext(ctx, LZ4F_VERSION);
+	local r = LZ4F_createCompressionContext(ctx, LZ4F_VERSION);
 	if (LZ4F_isError(r) ~= 0) then
 		printf("Failed to create context: error %u\n", tonumber(r));
 		return 1, size_in, size_out;
 	end
 	r = 1;
 
-	src = malloc(BUF_SIZE);
-	if (0 == src) then
+	local src = ffi.new("char [?]", BUF_SIZE);
+	if (nil == src) then
 		printf("Not enough memory\n");
 		return r, size_in, size_out;
 	end
-	ffi.gc(src, free);
 
 	frame_size = LZ4F_compressBound(BUF_SIZE, lz4_preferences);
 	size =  frame_size + LZ4_HEADER_SIZE + LZ4_FOOTER_SIZE;
-	buf = malloc(size);
+	local buf = ffi.new("char [?]", size);
 	if (buf == nil) then
 		printf("Not enough memory");
 		return r, size_in, size_out;
 	end
-	ffi.gc(buf, free);
 
 	 
-	count_out = LZ4F_compressBegin(ctx[0], buf, size, lz4_preferences);
-	n = count_out
-	offset = count_out
+	n = LZ4F_compressBegin(ctx[0], buf, size, lz4_preferences);
+	count_out = n
+	offset = n
 
 	if (LZ4F_isError(n) ~= 0) then
 		printf("Failed to start compression: error %u\n", tonumber(n));
@@ -80,8 +76,9 @@ local function compress_file(infile, out)
 	printf("Buffer size is %u bytes, header size %u bytes\n", tonumber(size), tonumber(n));
 
 	while (true) do
-		k = fread(src, 1, BUF_SIZE, infile);
-		if (k == 0) then
+		k, err = infile:read(src, BUF_SIZE);
+		print("k, err: ", k, err)
+		if (not k) then
 			break;
 		end
 
@@ -98,7 +95,7 @@ local function compress_file(infile, out)
 		if (size - offset < frame_size + LZ4_FOOTER_SIZE) then
 			printf("Writing %u bytes\n", tonumber(offset));
 
-			k = fwrite(buf, 1, offset, out);
+			k = outfile:write(buf, offset);
 			if (k < offset) then
 				if (ferror(out) ~= 0) then
 					printf("Write failed\n");
@@ -123,7 +120,7 @@ local function compress_file(infile, out)
 	count_out = count_out + n;
 	printf("Writing %u bytes\n", tonumber(offset));
 
-	k = fwrite(buf, 1, offset, out);
+	k = outfile:write(buf, offset);
 	if (k < offset) then
 		if (ferror(out) ~= 0) then
 			printf("Write failed");
@@ -149,25 +146,23 @@ local function compress(input, output)
 		output = input..".lz4"
 	end
 
-	local infile = fopen(input, "rb");
-	if infile == nil then
-		--fprintf(stderr, "Failed to open input file %s: %s\n", input, strerror(errno));
+	local infile, err = StdFile(input, "rb");
+	if err then
+		fprintf(io.stderr, "Failed to open input file %s: %s\n", input, err);
 		return r;
 	end
-	ffi.gc(infile, fclose);
 
-	local outfile = fopen(output, "wb");
-	if outfile == nil then
-		--fprintf(stderr, "Failed to open output file %s: %s\n", output, strerror(errno));
+	local outfile, err = StdFile(output, "wb")
+	if err then
+		fprintf(io.stderr, "Failed to open output file %s: %s\n", output, err);
 		return r;
 	end
-	ffi.gc(outfile, fclose);
 
 	local size_in = 0
 	local size_out = 0
 	r, size_in, size_out = compress_file(infile, outfile);
 	if (r == 0) then
-		printf("%s: %d → %d bytes, %3.2f\n",
+		printf("%s: %d => %d bytes, %3.2f\n",
 		       input, tonumber(size_in), tonumber(size_out),
 		       tonumber((tonumber(size_out) / tonumber(size_in)) * 100));
 	end
