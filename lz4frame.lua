@@ -134,6 +134,9 @@ local function getErrorString(errcode)
 end
 
 local exports = {
+    -- constants
+    LZ4F_VERSION = LZ4F_VERSION;
+
     -- enums
     -- LZ4F_blockSizeID_t
     LZ4F_default = ffi.C.LZ4F_default;

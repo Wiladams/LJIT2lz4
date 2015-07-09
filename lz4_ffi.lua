@@ -86,7 +86,7 @@ end
 local function getVersion()
     local ver = Lib_lz4.LZ4_versionNumber();
     local release = ver % 100;
-    local minor = ((ver - release) / 100) % 100;
+    local minor = ((ver - release) % (100*100))/100;
     local major = (ver - minor*100 - release) / (100*100) ;
     
     return {major = major, minor = minor, release = release}
