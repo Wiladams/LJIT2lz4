@@ -1,6 +1,8 @@
 
 local ffi = require("ffi")
 
+local Lib_lz4 = ffi.load("lz4")
+
 
 ffi.cdef[[
 int LZ4_versionNumber ();
@@ -81,16 +83,40 @@ local function  LZ4_COMPRESSBOUND(isize)
     return   isize + ((isize)/255) + 16
 end
 
+local function getVersion()
+    local ver = Lib_lz4.LZ4_versionNumber();
+    local release = ver % 100;
+    local minor = ((ver - release) / 100) % 100;
+    local major = (ver - minor*100 - release) / (100*100) ;
+    
+    return {major = major, minor = minor, release = release}
+end
 
-local Lib_lz4 = ffi.load("lz4")
 
 local exports = {
     Lib_lz4 = Lib_lz4;
 
+    -- constants
+    -- These are the version numbers the ffi interface
+    -- was originally built for
+    LZ4_VERSION_MAJOR = LZ4_VERSION_MAJOR;
+    LZ4_VERSION_MINOR = LZ4_VERSION_MINOR;
+    LZ4_VERSION_RELEASE = LZ4_VERSION_RELEASE;
+    
     -- local functions
+    LZ4_Version = getVersion;
     LZ4_COMPRESSBOUND = LZ4_COMPRESSBOUND;
 
     -- library functions
+    LZ4_versionNumber = Lib_lz4.LZ4_versionNumber;
 }
+
+setmetatable(exports, {
+    __call = function(self)
+        for k,v in pairs(exports) do
+            _G[k] = v;
+        end
+    end,
+})
 
 return exports
