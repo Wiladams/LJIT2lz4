@@ -80,7 +80,7 @@ local function  LZ4_COMPRESSBOUND(isize)
         return 0;
     end
 
-    return   isize + ((isize)/255) + 16
+    return   math.floor(isize + ((isize)/255) + 16)
 end
 
 local function getVersion()
@@ -109,6 +109,8 @@ local exports = {
 
     -- library functions
     LZ4_versionNumber = Lib_lz4.LZ4_versionNumber;
+    LZ4_createStreamDecode = Lib_lz4.LZ4_createStreamDecode;
+    LZ4_decompress_safe_continue = Lib_lz4.LZ4_decompress_safe_continue;
 }
 
 setmetatable(exports, {
@@ -116,6 +118,8 @@ setmetatable(exports, {
         for k,v in pairs(exports) do
             _G[k] = v;
         end
+        
+        return self
     end,
 })
 

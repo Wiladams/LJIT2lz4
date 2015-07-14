@@ -9,6 +9,7 @@ typedef struct _IO_FILE FILE;
 
 
 ffi.cdef[[
+void *calloc(size_t nitems, size_t size);
 void * malloc(const size_t size);
 void free(void *);
 
@@ -26,9 +27,22 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
 char *strerror(int  errnum );
 ]]
 
+local function fprintf(device, fmt, ...)
+	device:write(string.format(fmt, ...))
+end
+
+local function printf(fmt, ...)
+	io.write(string.format(fmt, ...))
+end
+
 --[[
 	Standard file stream interface
 --]]
+local function closeFile(fp)
+	print("closeFile")
+	ffi.C.fclose(fp)
+end
+
 local StdFile = {}
 setmetatable(StdFile, {
 	__call = function(self, ...)
@@ -60,9 +74,13 @@ function StdFile.new(self, filename, mode)
 
 		return nil, ffi.string(str);
 	end
-	ffi.gc(handle, ffi.C.fclose);
+	--ffi.gc(handle, closeFile);
 
 	return self:init(handle);
+end
+
+function StdFile.close(self)
+	ffi.C.fclose(self.Handle);
 end
 
 function StdFile.flush(self)
@@ -71,30 +89,28 @@ end
 
 function StdFile.write(self, buff, size)
 	local res = ffi.C.fwrite(buff, 1, size, self.Handle);
-	if res == size then
-		return size;
-	end
+	return tonumber(res);
 
 	-- error occured
-	return false, tostring(ffi.C.ferror(self.Handle));
+	--return res, tostring(ffi.C.ferror(self.Handle));
 end
 
 function StdFile.read(self, buff, size)
 	local res = ffi.C.fread(buff, 1, size, self.Handle);
-print("StdFile.read: ", size, res)
 
-	if res > 0 then
-		return res;
-	end
+	return tonumber(res);
 
 	-- error occured
-	return false, tostring(ffi.C.ferror(self.Handle));
+	--return res, tostring(ffi.C.ferror(self.Handle));
 end
 
 
 local exports = {
 	free = ffi.C.free;
 	malloc = ffi.C.malloc;
+
+	fprintf = fprintf;
+	printf = printf;
 
 	-- file handling
 	fclose = ffi.C.fclose;
@@ -117,6 +133,8 @@ setmetatable(exports, {
 		for k,v in pairs(exports) do
 			_G[k] = v;
 		end
+
+		return self;
 	end,
 })
 

@@ -8,15 +8,6 @@ local stdlib = require("stdlib")()
 
 
 
-local function fprintf(device, fmt, ...)
-	device:write(string.format(fmt, ...))
-end
-
-local function printf(fmt, ...)
-	io.write(string.format(fmt, ...))
-end
-
-
 local BUF_SIZE = (16*1024);
 local LZ4_HEADER_SIZE = 19;
 local LZ4_FOOTER_SIZE = 4;

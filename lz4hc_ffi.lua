@@ -59,6 +59,8 @@ setmetatable(exports, {
         for k,v in pairs(exports) do 
             _G[k] = v;
         end
+        
+        return self
     end,
 })
 
