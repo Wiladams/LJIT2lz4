@@ -103,7 +103,7 @@ local function test_decompress(outFp, inpFp)
     --local decBuf = ffi.new("char[?]", DEC_BUFFER_BYTES);
     local decBuf = malloc(DEC_BUFFER_BYTES)
     local decOffset = 0;
-    local lz4streamDecode = LZ4_createStreamDecode();
+    local lz4StreamDecode = LZ4_createStreamDecode();
 
     while(true) do
     
