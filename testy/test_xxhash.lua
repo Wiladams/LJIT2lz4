@@ -1,9 +1,9 @@
 package.path = package.path..";../?.lua"
 
 local xxhash = require("xxhash_ffi")
+local digest32 = xxhash.digest32;
+local digest64 = xxhash.digest64;
 
---unsigned int       LZ4_XXH32 (const void* input, size_t length, unsigned seed);
---unsigned long long LZ4_XXH64 (const void* input, size_t length, unsigned long long seed);
 
 local src = "Hello World!";
 
@@ -19,5 +19,29 @@ local function test_simpleHash64()
 	print(string.format("digest: 0x%x", digest))
 end
 
-test_simpleHash32();
-test_simpleHash64();
+local function test_digest()
+	local text = "test"
+	local digest = digest32(text, 12345)
+	print(digest)
+end
+
+local function test_hashVectors()
+	print("==== test_hashValues ====")
+	local vectors = {
+		{src = "test", seed = 12345, expected = 3834992036},
+		{src = "test", seed = 123, expected = 2758658570}
+	}
+
+	for _, v in ipairs(vectors) do
+		local digest = tonumber(xxhash.LZ4_XXH32(v.src, #v.src, v.seed));
+
+		io.write(string.format("%s %d %d %d\n", v.src, v.seed, v.expected, digest))
+		assert(digest == v.expected)
+	end
+	print("OK")
+end
+
+--test_simpleHash32();
+--test_simpleHash64();
+--test_hashVectors();
+test_digest();
