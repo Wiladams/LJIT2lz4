@@ -35,6 +35,45 @@ local function printf(fmt, ...)
 	io.write(string.format(fmt, ...))
 end
 
+local function compare(f0, f1)
+
+    local b0 = ffi.new("char[?]", 65536);
+    local b1 = ffi.new("char[?]", 65536);
+    local result = 0;
+
+    while(0 == result) do
+        local r0 = f0:read(b0, ffi.sizeof(b0));
+        local r1 = f1:read(b1, ffi.sizeof(b1));
+
+        result = r0 - r1;
+
+        if(0 == r0 or 0 == r1) then
+            break;
+        end
+
+        if(0 == result) then
+            result = memcmp(b0, b1, r0);
+        end
+    end
+
+    return result;
+end
+
+
+ffi.cdef[[
+typedef union {
+    char bytes[4];
+    int32_t intValue;    
+} typealias;
+]]
+local typealias = ffi.typeof("typealias")
+
+
+
+
+
+
+
 --[[
 	Standard file stream interface
 --]]
@@ -95,6 +134,13 @@ function StdFile.write(self, buff, size)
 	--return res, tostring(ffi.C.ferror(self.Handle));
 end
 
+function StdFile.write_int32(self, i) 
+    local talias = typealias({intValue=i})
+    self:write(talias.bytes, 4);
+    return 1;
+end
+
+
 function StdFile.read(self, buff, size)
 	local res = ffi.C.fread(buff, 1, size, self.Handle);
 
@@ -104,6 +150,16 @@ function StdFile.read(self, buff, size)
 	--return res, tostring(ffi.C.ferror(self.Handle));
 end
 
+function StdFile.read_int32(self)
+    local talias = typealias();
+    local res = self:read(talias.bytes, 4);
+    if res ~= 4 then
+        return 0;
+    end
+
+    return 1, tonumber(talias.intValue);
+end
+
 
 local exports = {
 	free = ffi.C.free;
@@ -111,6 +167,8 @@ local exports = {
 
 	fprintf = fprintf;
 	printf = printf;
+
+
 
 	-- file handling
 	fclose = ffi.C.fclose;
@@ -126,6 +184,9 @@ local exports = {
 
 	-- Classes
 	StdFile = StdFile;
+	
+
+	compare = compare;		-- compare two files
 }
 
 setmetatable(exports, {

@@ -1,6 +1,8 @@
 package.path = package.path..";../?.lua"
 
 -- LZ4 HC streaming API example : ring buffer
+-- Takes a source stream, and compresses it into random sized
+-- chunks generating a compressed output file.
 -- Based on previous work from Takayuki Matsuoka
 
 
@@ -29,29 +31,6 @@ local maxDstBytes = LZ4_COMPRESSBOUND(MESSAGE_MAX_BYTES)
 
 
 
-local function write_int32(fp, i) 
-    local talias = typealias({intValue=i})
-    --print("write_int32: ", i, talias.intValue)
-    fp:write(talias.bytes, 4);
-    return 1;
-end
-
-local function write_bin(fp, array, arrayBytes)
-    return fp:write(array, arrayBytes);
-end
-
-local function read_int32(fp)
-    local talias = typealias();
-    local res = fp:read(talias.bytes, 4);
-    print("read_int32: ", res, talias.intValue)
-    if res ~= 4 then
-        return 0;
-    end
-
-    return 1, tonumber(talias.intValue);
-end
-
-
 local inpBuf = ffi.new("char[?]",RING_BUFFER_BYTES);
 
 local function test_compress(outFp, inpFp)
@@ -77,7 +56,9 @@ local function test_compress(outFp, inpFp)
                 break;
             end
 
-            write_int32(outFp, cmpBytes);
+            -- write a count of bytes
+            -- followed by the actual bytes
+            outFp:write_int32(cmpBytes);
             outFp:write(cmpBuf, cmpBytes);
 
             inpOffset = inpOffset + inpBytes;
@@ -89,7 +70,7 @@ local function test_compress(outFp, inpFp)
         end
     end
 
-    write_int32(outFp, 0);
+    outFp:write_int32(0);
 end
 
 
