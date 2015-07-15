@@ -3,7 +3,7 @@ package.path = package.path..";../?.lua"
 
 local ffi = require("ffi")
 
-local lz4frame =  require("lz4frame")()
+local lz4frame =  require("lz4frame_ffi")()
 local stdlib = require("stdlib")()
 
 
