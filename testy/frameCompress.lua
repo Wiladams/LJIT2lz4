@@ -24,6 +24,13 @@ local function compress_file(infile, outfile)
 	local size_out = 0;
 
 	local ctx = ffi.new("struct LZ4F_cctx_s *[1]");
+
+	local r = LZ4F_createCompressionContext(ctx, LZ4F_VERSION);
+	if (LZ4F_isError(r) ~= 0) then
+		printf("Failed to create context: error %u\n", tonumber(r));
+		return 1, size_in, size_out;
+	end
+	
 	ffi.gc(ctx[0], LZ4F_freeCompressionContext);
 
 	local size, n, k; 
@@ -32,13 +39,7 @@ local function compress_file(infile, outfile)
 	local offset = 0; 
 	local frame_size;
 	local err = nil;
-
-	local r = LZ4F_createCompressionContext(ctx, LZ4F_VERSION);
-	if (LZ4F_isError(r) ~= 0) then
-		printf("Failed to create context: error %u\n", tonumber(r));
-		return 1, size_in, size_out;
-	end
-	r = 1;
+		r = 1;
 
 	local src = ffi.new("char [?]", BUF_SIZE);
 	if (nil == src) then
