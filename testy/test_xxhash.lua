@@ -21,9 +21,12 @@ local function test_simpleHash64()
 end
 
 local function test_digest()
+	print("==== test_digest ====")
 	local text = "test"
 	local digest = digest32(text, 12345)
 	print(digest)
+	assert(digest == 3834992036)
+	print("OK")
 end
 
 local function test_hashVectors()
@@ -34,7 +37,7 @@ local function test_hashVectors()
 	}
 
 	for _, v in ipairs(vectors) do
-		local digest = tonumber(xxhash.LZ4_XXH32(v.src, #v.src, v.seed));
+		local digest = tonumber(xxhash_ffi.LZ4_XXH32(v.src, #v.src, v.seed));
 
 		io.write(string.format("%s %d %d %d\n", v.src, v.seed, v.expected, digest))
 		assert(digest == v.expected)
@@ -42,7 +45,19 @@ local function test_hashVectors()
 	print("OK")
 end
 
---test_simpleHash32();
---test_simpleHash64();
---test_hashVectors();
+local function test_hasher32()
+	print("==== test_hasher32 ====")
+	local hasher = xxhash.xxHasher32(123);
+
+	hasher:update("test")
+	local digest = hasher:finish();
+	print(digest)
+	assert(digest == 2758658570)
+end
+
+
+test_simpleHash32();
+test_simpleHash64();
+test_hashVectors();
 test_digest();
+test_hasher32();

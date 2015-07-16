@@ -1,8 +1,16 @@
 -- xxhash.lua
+local ffi = require("ffi")
 
 local xxhash_ffi = require("xxhash_ffi")
 
 local xxHasher32 = {}
+setmetatable(xxHasher32, {
+	__call = function(self, ...)
+		return self:new(...);
+	end,
+})
+
+local xxHasher32_mt = {__index = xxHasher32}
 
 function xxHasher32.init(self, handle)
 	local obj = {
@@ -21,31 +29,34 @@ function xxHasher32.new(self, seed)
 	end
 
 	ffi.gc(state, xxhash_ffi.LZ4_XXH32_freeState);
-	xxhash_ffi.LZ4_XXH32_reset(seed);
+	xxhash_ffi.LZ4_XXH32_reset(state, seed);
 
 	return self:init(state);
 end
 
 function xxHasher32.update(self, data, len)
-	errcode = LZ4_XXH32_update(self.Handle, data, len)
+	len = len or #data
+	local errcode = xxhash_ffi.LZ4_XXH32_update(self.Handle, data, len)
 
 	return errcode;
 end
 
 function xxHasher32.finish(self)
-	local digest = xxhash_ffi.LZ4_XXH32_digest(self.handle)
+	local digest = xxhash_ffi.LZ4_XXH32_digest(self.Handle)
 	self.digest = digest;
+
+	return digest;
 end
 
 
 local function digest32(str, seed)
     seed = seed or 0
-    return tonumber(Lib_lz4.LZ4_XXH32(str, #str, seed));
+    return tonumber(xxhash_ffi.LZ4_XXH32(str, #str, seed));
 end
 
 local function digest64(str, seed)
     seed = seed or 0
-    return Lib_lz4.LZ4_XXH64(str, #str, seed);
+    return xxhash_ffi.LZ4_XXH64(str, #str, seed);
 end
 
 
