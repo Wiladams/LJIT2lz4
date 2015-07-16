@@ -1,6 +1,7 @@
 package.path = package.path..";../?.lua"
 
-local xxhash = require("xxhash_ffi")
+local xxhash_ffi = require("xxhash_ffi")
+local xxhash = require("xxhash")
 local digest32 = xxhash.digest32;
 local digest64 = xxhash.digest64;
 
@@ -9,13 +10,13 @@ local src = "Hello World!";
 
 local function test_simpleHash32()
 	print("==== test_simpleHash32 ====")
-	local digest = xxhash.LZ4_XXH32(src, #src, 1);
+	local digest = xxhash_ffi.LZ4_XXH32(src, #src, 1);
 	print(string.format("digest: 0x%x", digest))
 end
 
 local function test_simpleHash64()
 	print("==== test_simpleHash64 ====")
-	local digest = xxhash.LZ4_XXH32(src, #src, 1);
+	local digest = xxhash_ffi.LZ4_XXH32(src, #src, 1);
 	print(string.format("digest: 0x%x", digest))
 end
 

@@ -42,15 +42,7 @@ XXH_errorcode      LZ4_XXH64_update (XXH64_state_t* statePtr, const void* input,
 unsigned long long LZ4_XXH64_digest (const XXH64_state_t* statePtr);
 ]]
 
-local function digest32(str, seed)
-    seed = seed or 0
-    return tonumber(Lib_lz4.LZ4_XXH32(str, #str, seed));
-end
 
-local function digest64(str, seed)
-    seed = seed or 0
-    return Lib_lz4.LZ4_XXH64(str, #str, seed);
-end
 
 local exports = {
     Lib_XXHash =  Lib_lz4;
@@ -74,9 +66,6 @@ local exports = {
     LZ4_XXH64_update = Lib_lz4.LZ4_XXH64_update;
     LZ4_XXH64_digest = Lib_lz4.LZ4_XXH64_digest;
 
-    -- local functions
-    digest32 = digest32;
-    digest64 = digest64;
 }
 
 setmetatable(exports, {
