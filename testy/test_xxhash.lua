@@ -49,10 +49,23 @@ local function test_hasher32()
 	print("==== test_hasher32 ====")
 	local hasher = xxhash.xxHasher32(123);
 
-	hasher:update("test")
+	hasher:update("te")
+	hasher:update("st")
 	local digest = hasher:finish();
 	print(digest)
 	assert(digest == 2758658570)
+	print("OK")
+end
+
+local function test_hasher64()
+	print("==== test_hasher64 ====")
+	local hasher = xxhash.xxHasher64(123);
+
+	print("update: ", hasher:update("test"))
+	local digest = hasher:finish();
+	print(digest)
+	digest = tonumber(digest)
+	print("OK")
 end
 
 
@@ -61,3 +74,4 @@ test_simpleHash64();
 test_hashVectors();
 test_digest();
 test_hasher32();
+test_hasher64();
